@@ -11,7 +11,7 @@ import { CHARACTERS, CHAR_LIST, dailyHeroId, msToNextDaily } from './characters.
 import { META_UPGRADES } from './meta.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['loadingScreen','menuScreen','charScreen','shopScreen','howScreen','levelScreen','pauseScreen','deathScreen','resultsScreen'];
+const SCREENS = ['loadingScreen','menuScreen','charScreen','shopScreen','howScreen','tourScreen','levelScreen','pauseScreen','deathScreen','resultsScreen'];
 const GAME_PAGE = 'https://www.crazygames.com/game/horde-rush'; // canonical page (links back here)
 
 let currentResult = null;
@@ -25,9 +25,13 @@ export function initUI() {
   $('playBtn').addEventListener('click', () => { SFX.click(); startGame(); });
   $('charBtn').addEventListener('click', () => { SFX.click(); openHeroes(); });
   $('shopBtn').addEventListener('click', () => { SFX.click(); openShop(); });
-  $('howBtn').addEventListener('click', () => { SFX.click(); show('howScreen'); });
-  $('howPlay').addEventListener('click', () => { SFX.click(); startGame(); });
+  $('howBtn').addEventListener('click', () => { SFX.click(); openTour(() => { show('menuScreen'); }); });
+  $('howPlay').addEventListener('click', () => { SFX.click(); beginRun(); });
   $('muteBtn').addEventListener('click', toggleMute);
+
+  // tour
+  $('tourNext').addEventListener('click', () => { SFX.click(); tourNext(); });
+  $('tourSkip').addEventListener('click', () => { SFX.click(); tourFinish(); });
 
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => { SFX.click(); refreshMenu(); show('menuScreen'); }));
 
@@ -87,6 +91,11 @@ function toggleMute() {
 
 /* ---------------- start a run ---------------- */
 function startGame() {
+  // first-time players get the visual tour, then the run starts
+  if (!Meta.tourSeen()) { openTour(beginRun); return; }
+  beginRun();
+}
+function beginRun() {
   // claim daily hero on first play of the day (D1 retention hook)
   if (Meta.dailyAvailable()) {
     const { hero, granted } = Meta.claimDaily();
@@ -94,6 +103,56 @@ function startGame() {
   }
   for (const s of SCREENS) hide(s);
   Game.startRun(Meta.selectedChar());
+  // first-ever-run coach hint (keeps conversion high; non-blocking)
+  if (Meta.get().totalRuns === 0) {
+    setTimeout(() => { if (Game.isRunning()) toast('Move to dodge — you fire automatically!'); }, 700);
+    setTimeout(() => { if (Game.isRunning()) toast('Grab green gems to level up ✨'); }, 5200);
+  }
+}
+
+/* ---------------- visual tour ---------------- */
+const TOUR_STEPS = [
+  { title: 'MOVE', text: 'Drag anywhere on screen (or use WASD / arrow keys) to move. There is NO fire button — your weapons shoot by themselves!',
+    stage: `<div class="t-stick"></div><div class="t-nub"></div><div class="t-hero"></div>` },
+  { title: 'AUTO-FIRE', text: 'You attack automatically at the nearest enemy. Just focus on dodging the horde and staying alive.',
+    stage: `<div class="t-foe f1"></div><div class="t-foe f2"></div><div class="t-hero"></div>
+            <div class="t-bolt b1"></div><div class="t-bolt b2"></div><div class="t-bolt b3"></div><div class="t-bolt b4"></div>` },
+  { title: 'COLLECT & LEVEL UP', text: 'Defeated enemies drop green XP gems. Scoop them up to fill the bar and LEVEL UP for new upgrades.',
+    stage: `<div class="t-gem g1"></div><div class="t-gem g2"></div><div class="t-gem g3"></div><div class="t-hero"></div><div class="t-xp"><i></i></div>` },
+  { title: 'FUSE WEAPONS 🧬', text: 'The secret weapon: on the level-up screen, DRAG one weapon onto another to MERGE them into a powerful hybrid. Experiment for crazy builds!',
+    stage: `<div class="t-chip cA">➤</div><div class="t-chip cB">⚡</div><div class="t-chip cF">🔭</div><div class="t-finger">👆</div>` },
+  { title: 'SURVIVE & EARN', text: 'Outlast the horde, smash the bosses, and bank coins to buy permanent upgrades and new heroes. Good luck!',
+    stage: `<div class="t-emo e1">⏱️</div><div class="t-emo e2">💰</div><div class="t-emo e3">☠️</div><div class="t-emo big">🛡️</div>` },
+];
+let tourStep = 0;
+let tourDone = null;
+function openTour(onDone) {
+  tourDone = onDone || (() => show('menuScreen'));
+  tourStep = 0;
+  // build dots
+  const dots = $('tourDots'); dots.innerHTML = '';
+  TOUR_STEPS.forEach(() => dots.appendChild(document.createElement('i')));
+  renderTour();
+  overlayShow('tourScreen');
+}
+function renderTour() {
+  const s = TOUR_STEPS[tourStep];
+  $('tourStage').innerHTML = s.stage;
+  $('tourTitle').textContent = s.title;
+  $('tourText').textContent = s.text;
+  $('tourNext').textContent = tourStep === TOUR_STEPS.length - 1 ? '▶ PLAY' : 'NEXT ▶';
+  $('tourSkip').style.visibility = tourStep === TOUR_STEPS.length - 1 ? 'hidden' : 'visible';
+  Array.from($('tourDots').children).forEach((d, i) => d.classList.toggle('on', i === tourStep));
+}
+function tourNext() {
+  if (tourStep < TOUR_STEPS.length - 1) { tourStep++; renderTour(); }
+  else tourFinish();
+}
+function tourFinish() {
+  Meta.setTourSeen();
+  hide('tourScreen');
+  const fn = tourDone; tourDone = null;
+  if (fn) fn();
 }
 
 /* ---------------- heroes ---------------- */

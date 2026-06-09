@@ -101,13 +101,13 @@ export function startRun(charId) {
 
   player = {
     x: 0, y: 0, r: 16, face: { x: 0, y: -1 },
-    baseSpeed: 198 * (1 + (m.speed || 0) + (perm.speed || 0)),
-    maxHp: Math.round(100 + (m.hp || 0) + (perm.hp || 0)),
+    baseSpeed: 215 * (1 + (m.speed || 0) + (perm.speed || 0)),
+    maxHp: Math.round(120 + (m.hp || 0) + (perm.hp || 0)),
     hp: 0, invuln: 0,
     dmgMul: 1 + (m.dmg || 0) + (perm.dmg || 0),
     hasteMul: 1 + (perm.haste || 0),
     areaMul: 1 + (m.area || 0),
-    pickup: 78 * (1 + (m.pickup || 0) + (perm.pickup || 0)),
+    pickup: 100 * (1 + (m.pickup || 0) + (perm.pickup || 0)),
     greed: 1 + (m.greed || 0) + (perm.greed || 0),
     armor: 0, regen: 0,
     luck: (perm.luck || 0),
@@ -123,7 +123,7 @@ export function startRun(charId) {
   enemies.length = projectiles.length = gems.length = coinsArr.length = 0;
   particles.length = floats.length = hazards.length = arcs.length = orbiters.length = pickups.length = 0;
   enemyBullets.length = 0;
-  boss = null; bossPending = 0; bossIndex = 0; nextBossT = 120; spawnAcc = 0; eid = 1;
+  boss = null; bossPending = 0; bossIndex = 0; nextBossT = 140; spawnAcc = 0; eid = 1;
   Object.assign(state, { t: 0, kills: 0, coins: 0, level: 1, xp: 0, xpNext: xpForLevel(1), pendingLevels: 0, ended: false, shake: 0 });
   cam.x = 0; cam.y = 0;
 
@@ -135,7 +135,7 @@ export function startRun(charId) {
   if (!raf) raf = requestAnimationFrame(loop);
 }
 
-function xpForLevel(lvl) { return Math.round(5 + lvl * 3.2 + lvl * lvl * 0.35); }
+function xpForLevel(lvl) { return Math.round(3 + (lvl - 1) * 2.4 + (lvl - 1) * (lvl - 1) * 0.55); }
 
 export function pause() {
   if (!running) return;
@@ -180,9 +180,9 @@ function recalcPassives() {
     else if (p.stat === 'hp') hpAdd += p.add * lvl;
   }
   player.dmgMul = dmg; player.hasteMul = haste; player.greed = greed;
-  player.baseSpeed = 198 * speed; player.pickup = 78 * pickup;
+  player.baseSpeed = 215 * speed; player.pickup = 100 * pickup;
   player.armor = Math.min(0.7, armor); player.regen = regen;
-  const newMax = Math.round(100 + (m.hp||0) + (perm.hp||0) + hpAdd);
+  const newMax = Math.round(120 + (m.hp||0) + (perm.hp||0) + hpAdd);
   if (newMax > player.maxHp) player.hp += (newMax - player.maxHp); // heal the delta
   player.maxHp = newMax;
 }
@@ -288,21 +288,21 @@ function afterChoice() {
 
 /* ---------------- spawning ---------------- */
 const ENEMY_TYPES = {
-  grunt:  { r: 13, hp: 1.0, spd: 78,  dmg: 8,  color: '#ff5d6c', xp: 1, coin: 0.18, shape: 'tri' },
-  fast:   { r: 10, hp: 0.6, spd: 138, dmg: 6,  color: '#ff9f43', xp: 1, coin: 0.16, shape: 'dia' },
-  tank:   { r: 22, hp: 3.4, spd: 52,  dmg: 14, color: '#a55bff', xp: 3, coin: 0.5,  shape: 'hex' },
-  shoot:  { r: 13, hp: 1.2, spd: 60,  dmg: 9,  color: '#36d1c4', xp: 2, coin: 0.4,  shape: 'sq', ranged: true },
-  brute:  { r: 28, hp: 6.0, spd: 46,  dmg: 18, color: '#ff3cac', xp: 6, coin: 1.0,  shape: 'hex' },
+  grunt:  { r: 13, hp: 1.0, spd: 74,  dmg: 5,  color: '#ff5d6c', xp: 1, coin: 0.20, shape: 'tri' },
+  fast:   { r: 10, hp: 0.6, spd: 128, dmg: 4,  color: '#ff9f43', xp: 1, coin: 0.16, shape: 'dia' },
+  tank:   { r: 22, hp: 3.2, spd: 50,  dmg: 9,  color: '#a55bff', xp: 3, coin: 0.5,  shape: 'hex' },
+  shoot:  { r: 13, hp: 1.2, spd: 58,  dmg: 6,  color: '#36d1c4', xp: 2, coin: 0.4,  shape: 'sq', ranged: true },
+  brute:  { r: 28, hp: 6.0, spd: 44,  dmg: 13, color: '#ff3cac', xp: 6, coin: 1.0,  shape: 'hex' },
 };
 function pickType() {
   const t = state.t; const r = Math.random();
-  if (t > 150 && r < 0.10) return 'brute';
-  if (t > 90 && r < 0.22) return 'shoot';
-  if (t > 55 && r < 0.40) return 'tank';
-  if (t > 18 && r < 0.62) return 'fast';
+  if (t > 170 && r < 0.10) return 'brute';
+  if (t > 105 && r < 0.20) return 'shoot';
+  if (t > 70 && r < 0.36) return 'tank';
+  if (t > 28 && r < 0.55) return 'fast';
   return 'grunt';
 }
-function difficultyHp() { return 16 + state.t * 1.7 + Math.pow(state.t, 1.35) * 0.05; }
+function difficultyHp() { return 10 + state.t * 0.85 + Math.pow(state.t, 1.32) * 0.03; }
 
 function spawnEnemy(typeKey) {
   if (enemies.length > 360) return;
@@ -322,7 +322,7 @@ function spawnEnemy(typeKey) {
 
 function spawnBoss() {
   bossIndex++;
-  const hpMul = 60 + bossIndex * 40;
+  const hpMul = 32 + bossIndex * 20;
   const b = {
     id: eid++, boss: true, x: player.x, y: player.y - Math.max(W, H) * 0.62,
     r: 46 + bossIndex * 4, hp: difficultyHp() * hpMul, maxHp: difficultyHp() * hpMul,
@@ -487,7 +487,7 @@ function killBoss(b) {
 function hurtPlayer(dmg) {
   if (player.invuln > 0) return;
   dmg *= (1 - player.armor);
-  player.hp -= dmg; player.invuln = 0.6;
+  player.hp -= dmg; player.invuln = 0.75;
   state.shake = Math.max(state.shake, 6);
   SFX.hurt();
   spawnFloat(player.x, player.y - 26, '-' + Math.round(dmg), '#ff4d5e', 16);
@@ -570,15 +570,15 @@ function update(dt) {
   buildGrid();
 
   // ----- spawning -----
-  const interval = Math.max(0.16, 0.95 - state.t * 0.006);
+  const interval = Math.max(0.25, 1.3 - state.t * 0.0048);
   spawnAcc += dt;
   while (spawnAcc >= interval) {
     spawnAcc -= interval;
-    const burstN = 1 + Math.floor(state.t / 28);
+    const burstN = 1 + Math.floor(state.t / 40);
     for (let i = 0; i < burstN; i++) spawnEnemy(pickType());
   }
   // boss timing
-  if (!boss && state.t >= nextBossT) { spawnBoss(); nextBossT += 130; }
+  if (!boss && state.t >= nextBossT) { spawnBoss(); nextBossT += 140; }
 
   // ----- weapons -----
   fireWeapons(dt);

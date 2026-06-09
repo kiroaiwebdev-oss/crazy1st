@@ -17,6 +17,7 @@ const DEFAULT = {
   upgrades: {},            // id -> level
   dailyClaimed: -1,        // day index of last claim
   muted: false,
+  tourSeen: false,         // has the player seen the visual tour
 };
 
 export const META_UPGRADES = {
@@ -111,3 +112,7 @@ export function recordRun(seconds, kills, coinsEarned) {
 /* ---------- audio pref ---------- */
 export function setMutedPref(m) { data.muted = m; save(); }
 export function mutedPref() { return data.muted; }
+
+/* ---------- tour ---------- */
+export function tourSeen() { return !!data.tourSeen; }
+export function setTourSeen() { data.tourSeen = true; save(); }
