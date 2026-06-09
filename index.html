@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#070b16" />
+<title>Horde Rush — Survivor Bullet Heaven</title>
+<meta name="description" content="Horde Rush is a fast roguelike survivor game. Move, auto-blast endless hordes, and FUSE weapons into absurd hybrids. Play this free bullet heaven auto shooter online." />
+<link rel="preload" href="css/styles.css" as="style" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ===== Game canvas ===== -->
+  <canvas id="game" aria-label="Horde Rush game canvas"></canvas>
+
+  <!-- ===== Touch joystick layer (mobile) ===== -->
+  <div id="stickLayer" class="stick-layer hidden">
+    <div id="stickBase" class="stick-base">
+      <div id="stickNub" class="stick-nub"></div>
+    </div>
+  </div>
+
+  <!-- ===== Top HUD (in-run) ===== -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-row">
+      <div id="hpWrap" class="bar hp"><div id="hpFill" class="bar-fill"></div><span id="hpText" class="bar-text">100/100</span></div>
+    </div>
+    <div class="hud-row">
+      <div id="xpWrap" class="bar xp"><div id="xpFill" class="bar-fill"></div><span id="lvlText" class="lvl-badge">Lv 1</span></div>
+    </div>
+    <div class="hud-stats">
+      <span id="timeText" class="stat-chip">00:00</span>
+      <span id="killText" class="stat-chip">☠ 0</span>
+      <span id="coinText" class="stat-chip">◈ 0</span>
+    </div>
+    <button id="pauseBtn" class="icon-btn" aria-label="Pause">II</button>
+  </div>
+
+  <!-- ===== Boss banner ===== -->
+  <div id="bossBanner" class="boss-banner hidden"><span>⚠ ELITE INCOMING ⚠</span></div>
+  <div id="bossHpWrap" class="boss-hp hidden"><div id="bossHpFill"></div><span id="bossName">BOSS</span></div>
+
+  <!-- ===== Toast / floating notice ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- =================================================================== -->
+  <!-- LOADING SCREEN -->
+  <!-- =================================================================== -->
+  <section id="loadingScreen" class="screen loading-screen">
+    <div class="logo">
+      <h1 class="title-glow">HORDE<span class="accent">RUSH</span></h1>
+      <p class="tagline">SURVIVOR · BULLET HEAVEN</p>
+    </div>
+    <div class="loadbar"><div id="loadFill" class="loadbar-fill"></div></div>
+    <p id="loadHint" class="load-hint">Loading arena…</p>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- MAIN MENU -->
+  <!-- =================================================================== -->
+  <section id="menuScreen" class="screen menu-screen hidden">
+    <div class="menu-top">
+      <h1 class="title-glow small">HORDE<span class="accent">RUSH</span></h1>
+      <p class="tagline">Become a one-person army.</p>
+    </div>
+
+    <div class="menu-coins">
+      <span class="coin-pill">◈ <b id="menuCoins">0</b></span>
+      <span class="best-pill">BEST <b id="menuBest">00:00</b></span>
+    </div>
+
+    <button id="playBtn" class="btn btn-primary btn-huge pulse">▶ PLAY</button>
+
+    <div class="menu-row">
+      <button id="charBtn" class="btn btn-ghost">HEROES</button>
+      <button id="shopBtn" class="btn btn-ghost">UPGRADES</button>
+      <button id="howBtn" class="btn btn-ghost">HOW TO</button>
+    </div>
+
+    <div id="dailyStrip" class="daily-strip">
+      <span class="daily-label">★ TODAY'S FREE HERO</span>
+      <span id="dailyHeroName" class="daily-hero">—</span>
+      <span id="dailyTimer" class="daily-timer"></span>
+    </div>
+
+    <div class="menu-foot">
+      <button id="muteBtn" class="icon-btn small" aria-label="Mute">♪</button>
+      <span class="ver">v1.0 · Basic Launch</span>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- HERO SELECT -->
+  <!-- =================================================================== -->
+  <section id="charScreen" class="screen sheet hidden">
+    <div class="sheet-head"><h2>SELECT HERO</h2><button class="close-x" data-close>✕</button></div>
+    <div id="charGrid" class="card-grid"></div>
+    <div class="sheet-foot"><span class="coin-pill">◈ <b id="charCoins">0</b></span></div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- UPGRADE SHOP (meta) -->
+  <!-- =================================================================== -->
+  <section id="shopScreen" class="screen sheet hidden">
+    <div class="sheet-head"><h2>PERMANENT UPGRADES</h2><button class="close-x" data-close>✕</button></div>
+    <div id="shopGrid" class="card-grid"></div>
+    <div class="sheet-foot"><span class="coin-pill">◈ <b id="shopCoins">0</b></span></div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- HOW TO -->
+  <!-- =================================================================== -->
+  <section id="howScreen" class="screen sheet hidden">
+    <div class="sheet-head"><h2>HOW TO PLAY</h2><button class="close-x" data-close>✕</button></div>
+    <div class="how-body">
+      <div class="how-item"><span class="how-ico">🕹️</span><div><b>MOVE</b><p>Drag anywhere on touch, or WASD / Arrow keys. Your weapons fire automatically.</p></div></div>
+      <div class="how-item"><span class="how-ico">⬆️</span><div><b>LEVEL UP</b><p>Grab glowing gems. Every level, pick 1 of 3 upgrades — or FUSE.</p></div></div>
+      <div class="how-item"><span class="how-ico">🧬</span><div><b>FUSE WEAPONS</b><p>On the upgrade screen, drag one weapon onto another to merge them into an absurd hybrid. This is the whole game.</p></div></div>
+      <div class="how-item"><span class="how-ico">☠️</span><div><b>SURVIVE</b><p>Hordes scale forever. Beat the elite bosses. Bank coins for permanent upgrades.</p></div></div>
+    </div>
+    <div class="sheet-foot"><button id="howPlay" class="btn btn-primary">GOT IT — PLAY</button></div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- LEVEL UP / FUSION OVERLAY -->
+  <!-- =================================================================== -->
+  <section id="levelScreen" class="screen overlay hidden">
+    <div class="overlay-inner">
+      <h2 class="level-title">LEVEL <span id="levelNum">2</span></h2>
+      <p class="level-sub">Choose an upgrade — or drag to <b class="accent">FUSE</b></p>
+      <div id="choiceRow" class="choice-row"></div>
+
+      <div class="fusion-bench">
+        <p class="bench-label">YOUR ARSENAL <span class="bench-hint">drag one onto another to fuse</span></p>
+        <div id="benchRow" class="bench-row"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- PAUSE -->
+  <!-- =================================================================== -->
+  <section id="pauseScreen" class="screen overlay hidden">
+    <div class="overlay-inner narrow">
+      <h2>PAUSED</h2>
+      <button id="resumeBtn" class="btn btn-primary btn-wide">RESUME</button>
+      <button id="quitBtn" class="btn btn-ghost btn-wide">QUIT TO MENU</button>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- DEATH / REVIVE -->
+  <!-- =================================================================== -->
+  <section id="deathScreen" class="screen overlay hidden">
+    <div class="overlay-inner narrow">
+      <h2 class="death-title">YOU FELL</h2>
+      <p id="deathSub" class="level-sub">The horde overwhelmed you.</p>
+      <button id="reviveBtn" class="btn btn-reward btn-wide">▶ REVIVE (watch ad)</button>
+      <button id="giveupBtn" class="btn btn-ghost btn-wide">END RUN</button>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- RESULTS + SHARE CARD -->
+  <!-- =================================================================== -->
+  <section id="resultsScreen" class="screen results-screen hidden">
+    <div class="results-inner">
+      <h2 class="results-title">RUN COMPLETE</h2>
+      <canvas id="shareCard" class="share-card" width="720" height="900"></canvas>
+      <div id="x2Wrap" class="x2-wrap">
+        <button id="x2Btn" class="btn btn-reward btn-wide">×2 COINS (watch ad)</button>
+      </div>
+      <div class="results-actions">
+        <button id="shareBtn" class="btn btn-primary">📋 SHARE / CHALLENGE</button>
+        <button id="againBtn" class="btn btn-primary">↺ AGAIN</button>
+        <button id="menuBtn2" class="btn btn-ghost">MENU</button>
+      </div>
+      <p id="shareNote" class="share-note hidden">Link copied — paste it anywhere to challenge a friend!</p>
+    </div>
+  </section>
+
+  <!-- ad cover (visual only; real ads served by CrazyGames on Full Launch) -->
+  <div id="adCover" class="ad-cover hidden"><div class="ad-spin"></div><p>Loading reward…</p></div>
+
+  <script src="js/main.js" type="module"></script>
+</body>
+</html>
