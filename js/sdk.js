@@ -11,6 +11,8 @@
 // Flip to true ONLY for Full Launch (after graduation + SDK approval).
 export const ADS_ENABLED = false;
 
+import { duckForAd } from './audio.js';
+
 const SDK_SRC = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
 
 let sdk = null;            // window.CrazyGames.SDK when available
@@ -46,6 +48,7 @@ export async function initSDK() {
       const env = (sdk.environment || (sdk.game && sdk.game.environment)) || 'disabled';
       available = env === 'crazygames';
       inited = true;
+      if (available) loadingStart(); // begin the loading window (paired with loadingStop)
     } catch (e) {
       available = false;
     }
@@ -94,11 +97,11 @@ export function requestMidgame() {
   return new Promise((resolve) => {
     try {
       sdk.ad.requestAd('midgame', {
-        adFinished: () => resolve(true),
-        adError: () => resolve(false),
-        adStarted: () => {},
+        adStarted: () => duckForAd(true),
+        adFinished: () => { duckForAd(false); resolve(true); },
+        adError: () => { duckForAd(false); resolve(false); },
       });
-    } catch { resolve(false); }
+    } catch { duckForAd(false); resolve(false); }
   });
 }
 
@@ -108,12 +111,12 @@ export function requestRewarded() {
     let rewarded = false;
     try {
       sdk.ad.requestAd('rewarded', {
-        adStarted: () => {},
-        adFinished: () => resolve(rewarded || true),
+        adStarted: () => duckForAd(true),
+        adFinished: () => { duckForAd(false); resolve(rewarded || true); },
         rewardGranted: () => { rewarded = true; },
-        adError: () => resolve(false),
+        adError: () => { duckForAd(false); resolve(false); },
       });
-    } catch { resolve(false); }
+    } catch { duckForAd(false); resolve(false); }
   });
 }
 

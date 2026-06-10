@@ -14,9 +14,6 @@ const $ = (id) => document.getElementById(id);
 function boot() {
   const canvas = $('game');
 
-  // Tell CrazyGames we are loading (no-op off-domain).
-  SDK.loadingStart();
-
   // Wire game <-> ui callbacks.
   Game.init(canvas, {
     onLevelUp: UI.onLevelUp,

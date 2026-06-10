@@ -856,7 +856,7 @@ function render() {
   // projectiles
   for (const p of projectiles) drawProjectile(p, ox, oy);
   // enemy bullets
-  for (const b of enemyBullets) { ctx.fillStyle = b.color; ctx.shadowColor = b.color; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(b.x+ox, b.y+oy, b.r, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+  for (const b of enemyBullets) { ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x+ox, b.y+oy, b.r, 0, 6.28); ctx.fill(); }
 
   // arcs (lightning)
   for (const a of arcs) drawArc(a, ox, oy);
@@ -923,9 +923,7 @@ function drawEnemy(e, ox, oy) {
   const x = e.x + ox, y = e.y + oy;
   if (x < -40 || x > W+40 || y < -40 || y > H+40) return;
   ctx.fillStyle = e.flash > 0 ? '#ffffff' : e.color;
-  ctx.shadowColor = e.color; ctx.shadowBlur = 6;
   shape(x, y, e.r, e.shape);
-  ctx.shadowBlur = 0;
   if (e.slowT > 0) { ctx.strokeStyle = 'rgba(127,223,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, e.r + 3, 0, 6.28); ctx.stroke(); }
 }
 function shape(x, y, r, kind) {
@@ -948,19 +946,19 @@ function drawBoss(b, ox, oy) {
 }
 function drawProjectile(p, ox, oy) {
   const x = p.x + ox, y = p.y + oy;
-  ctx.shadowColor = p.color; ctx.shadowBlur = 10;
   if (p.saw) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(p.spin);
-    ctx.fillStyle = p.color; ctx.beginPath();
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 10; ctx.beginPath();
     for (let i = 0; i < 8; i++) { const a = i/8*6.28; const r = i%2?p.r:p.r*0.55; const fx=Math.cos(a)*r, fy=Math.sin(a)*r; i?ctx.lineTo(fx,fy):ctx.moveTo(fx,fy); }
-    ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
   } else {
-    ctx.fillStyle = p.color;
+    // no per-projectile shadowBlur (perf): glow faked with a translucent halo + trail
+    ctx.globalAlpha = 0.28; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(x, y, p.r * 1.7, 0, 6.28); ctx.fill();
+    ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.arc(x - p.vx*0.012, y - p.vy*0.012, p.r*0.8, 0, 6.28); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = p.color;
     ctx.beginPath(); ctx.arc(x, y, p.r, 0, 6.28); ctx.fill();
-    // motion trail
-    ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.arc(x - p.vx*0.012, y - p.vy*0.012, p.r*0.7, 0, 6.28); ctx.fill(); ctx.globalAlpha = 1;
   }
-  ctx.shadowBlur = 0;
 }
 function drawBlade(x, y, r, color) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(performance.now()*0.02);
@@ -985,9 +983,8 @@ function drawArc(a, ox, oy) {
   ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 }
 function drawDiamond(x, y, r, color) {
-  ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 6;
+  ctx.fillStyle = color;
   ctx.beginPath(); ctx.moveTo(x, y-r); ctx.lineTo(x+r, y); ctx.lineTo(x, y+r); ctx.lineTo(x-r, y); ctx.closePath(); ctx.fill();
-  ctx.shadowBlur = 0;
 }
 function drawChest(x, y, t) {
   const bob = Math.sin(t * 4) * 4;

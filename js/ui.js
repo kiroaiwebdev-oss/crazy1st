@@ -13,6 +13,8 @@ import { META_UPGRADES } from './meta.js';
 const $ = (id) => document.getElementById(id);
 const SCREENS = ['loadingScreen','menuScreen','charScreen','shopScreen','howScreen','tourScreen','levelScreen','pauseScreen','deathScreen','resultsScreen'];
 const GAME_PAGE = 'https://www.crazygames.com/game/horde-rush'; // canonical page (links back here)
+// emoji-capable font stack (canvas needs this explicitly or icons render blank)
+const EMOJI = "'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color',sans-serif";
 
 let currentResult = null;
 
@@ -398,7 +400,8 @@ function drawShareCard(r) {
 
   // hero
   x.fillStyle = hex(ch.color, 0.16); roundRect(x, W/2 - 60, 168, 120, 120, 24); x.fill();
-  x.font = '70px system-ui'; x.fillText(ch.icon, W/2, 256);
+  x.strokeStyle = ch.color; x.lineWidth = 3; roundRect(x, W/2 - 60, 168, 120, 120, 24); x.stroke();
+  x.font = '70px ' + EMOJI; x.fillStyle = '#fff'; x.fillText(ch.icon, W/2, 256);
   x.fillStyle = ch.color; x.font = '800 28px Segoe UI, system-ui, sans-serif';
   x.fillText(ch.name, W/2, 320);
 
@@ -420,25 +423,30 @@ function drawShareCard(r) {
   const slot = 96, gap = 14, totalW = ws.length * slot + (ws.length - 1) * gap;
   let sx = W/2 - totalW/2;
   for (const w of ws) {
+    const col = w.def.color || '#22e6ff';
     const fused = w.def.fused;
-    x.fillStyle = fused ? hex('#9dff3c', 0.18) : 'rgba(255,255,255,0.06)';
+    // always draw a colored badge so an icon is visible even if emoji glyphs are unavailable
+    x.fillStyle = hex(col, fused ? 0.24 : 0.16);
     roundRect(x, sx, 660, slot, slot, 18); x.fill();
-    if (fused) { x.strokeStyle = '#9dff3c'; x.lineWidth = 3; x.shadowColor = '#9dff3c'; x.shadowBlur = 14; roundRect(x, sx, 660, slot, slot, 18); x.stroke(); x.shadowBlur = 0; }
-    x.font = '46px system-ui'; x.fillStyle = '#fff'; x.textAlign = 'center';
+    x.strokeStyle = fused ? '#9dff3c' : hex(col, 0.75); x.lineWidth = fused ? 3 : 2;
+    if (fused) { x.shadowColor = '#9dff3c'; x.shadowBlur = 14; }
+    roundRect(x, sx, 660, slot, slot, 18); x.stroke(); x.shadowBlur = 0;
+    x.font = '46px ' + EMOJI; x.fillStyle = '#fff'; x.textAlign = 'center';
     x.fillText(w.def.icon, sx + slot/2, 660 + slot/2 + 14);
-    x.font = '900 16px Segoe UI'; x.fillStyle = '#22e6ff'; x.fillText('L' + w.level, sx + slot/2, 660 + slot - 8);
+    x.font = '900 16px Segoe UI, sans-serif'; x.fillStyle = fused ? '#9dff3c' : '#22e6ff';
+    x.fillText('L' + w.level, sx + slot/2, 660 + slot - 8);
     sx += slot + gap;
   }
 
   // footer challenge
-  x.fillStyle = '#ffd54a'; x.font = '900 30px Segoe UI, system-ui, sans-serif';
+  x.fillStyle = '#ffd54a'; x.font = '900 30px Segoe UI, ' + EMOJI;
   x.fillText('⚔ BEAT MY TIME ⚔', W/2, 812);
   x.fillStyle = '#8aa0c8'; x.font = '700 22px Segoe UI, system-ui, sans-serif';
   x.fillText('crazygames.com › Horde Rush', W/2, 850);
 }
 function stat(x, cx, cy, big, label, color) {
   x.textAlign = 'center';
-  x.fillStyle = color; x.font = '900 54px Segoe UI, system-ui, sans-serif'; x.fillText(big, cx, cy);
+  x.fillStyle = color; x.font = '900 54px Segoe UI, ' + EMOJI; x.fillText(big, cx, cy);
   x.fillStyle = '#8aa0c8'; x.font = '700 20px Segoe UI, system-ui, sans-serif'; x.fillText(label, cx, cy + 30);
 }
 function roundRect(x, rx, ry, w, h, r) {

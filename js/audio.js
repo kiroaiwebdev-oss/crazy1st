@@ -30,6 +30,13 @@ export function setMuted(m) {
 }
 export function isMuted() { return muted; }
 
+// Suspend/resume audio during ad playback (CrazyGames requires game audio
+// to be muted while an ad plays). Does not change the user's mute preference.
+export function duckForAd(on) {
+  if (!ctx) return;
+  try { if (on) ctx.suspend(); else if (!muted) ctx.resume(); } catch {}
+}
+
 function blip({ freq = 440, type = 'square', dur = 0.08, vol = 0.3, slide = 0, delay = 0 }) {
   if (!ensure() || muted) return;
   const t0 = ctx.currentTime + delay;
